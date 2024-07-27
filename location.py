@@ -1,0 +1,3 @@
+
+def getLocation():
+    return 'location'
