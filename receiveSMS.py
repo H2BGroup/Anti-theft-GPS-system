@@ -36,12 +36,16 @@ print("Number {} have sent text: {}".format(os.environ["SMS_1_NUMBER"], text))
 pid = os.fork()
 if pid:
     #parent
+    time.sleep(1)
     pass
 else:
     #child
     smsd_pid = get_pid('gammu-smsd')
     send_signal(smsd_pid, 'SIGUSR1')
     time.sleep(1)
-    parseSMS.parseSMS(os.environ["SMS_1_NUMBER"], text)
+    try:
+        parseSMS.parseSMS(os.environ["SMS_1_NUMBER"], text)
+    except Exception as e:
+        print("Error while processing SMS message")
     send_signal(smsd_pid, 'SIGUSR2')
     sys.exit()
