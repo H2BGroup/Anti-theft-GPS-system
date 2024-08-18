@@ -22,10 +22,7 @@
 from parseSMS import parseSMS
 import gammu
 
-def receiveSMS():
-    state_machine = gammu.StateMachine()
-    state_machine.ReadConfig()
-    state_machine.Init()
+def receiveSMS(state_machine):
 
     status = state_machine.GetSMSStatus()
 
@@ -83,4 +80,3 @@ def receiveSMS():
             #         print("Text:")
             #         print(e["Buffer"])
             #         print()
-receiveSMS()
