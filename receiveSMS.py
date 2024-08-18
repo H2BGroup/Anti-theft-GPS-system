@@ -1,51 +1,86 @@
 #!/usr/bin/env python
+#
+# Copyright © 2003 - 2018 Michal Čihař <michal@cihar.com>
+#
+# This file is part of python-gammu <https://wammu.eu/python-gammu/>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
 
-import os
-import sys
-import parseSMS
-import subprocess
-import time
+from parseSMS import parseSMS
+import gammu
 
-def get_pid(process_name):
-    """Get the PID of the process by name."""
+def receiveSMS():
+    state_machine = gammu.StateMachine()
+    state_machine.ReadConfig()
+    state_machine.Init()
+
+    status = state_machine.GetSMSStatus()
+
+    remain = status["SIMUsed"] + status["PhoneUsed"] + status["TemplatesUsed"]
+
+    sms = []
+    start = True
+
     try:
-        pid = subprocess.check_output(['pidof', process_name]).strip().decode('utf-8')
-        return pid
-    except subprocess.CalledProcessError:
-        return None
-    
-def send_signal(pid, signal):
-    """Send a signal to the process with the given PID."""
-    subprocess.run(['kill', f'-{signal}', pid])
+        while remain > 0:
+            if start:
+                cursms = state_machine.GetNextSMS(Start=True, Folder=0)
+                start = False
+            else:
+                cursms = state_machine.GetNextSMS(Location=cursms[0]["Location"], Folder=0)
+            remain = remain - len(cursms)
+            sms.append(cursms)
+            state_machine.DeleteSMS(Folder=0, Location=cursms[0]["Location"])
+    except gammu.ERR_EMPTY:
+        # This error is raised when we've reached last entry
+        # It can happen when reported status does not match real counts
+        print("Failed to read all messages!")
 
-numparts = int(os.environ["DECODED_PARTS"])
+    data = gammu.LinkSMS(sms)
 
-text = ""
-# Are there any decoded parts?
-if numparts == 0:
-    text = os.environ["SMS_1_TEXT"]
-# Get all text parts
-else:
-    for i in range(1, numparts + 1):
-        varname = "DECODED_%d_TEXT" % i
-        if varname in os.environ:
-            text = text + os.environ[varname]
+    for x in data:
+        v = gammu.DecodeSMS(x)
 
-# Do something with the text
-print("Number {} have sent text: {}".format(os.environ["SMS_1_NUMBER"], text))
-pid = os.fork()
-if pid:
-    #parent
-    time.sleep(1)
-    pass
-else:
-    #child
-    smsd_pid = get_pid('gammu-smsd')
-    send_signal(smsd_pid, 'SIGUSR1')
-    time.sleep(1)
-    try:
-        parseSMS.parseSMS(os.environ["SMS_1_NUMBER"], text)
-    except Exception as e:
-        print("Error while processing SMS message")
-    send_signal(smsd_pid, 'SIGUSR2')
-    sys.exit()
+        m = x[0]
+        print()
+        print("{:<15}: {}".format("Number", m["Number"]))
+        print("{:<15}: {}".format("Date", str(m["DateTime"])))
+        print("{:<15}: {}".format("State", m["State"]))
+        print("{:<15}: {}".format("Folder", m["Folder"]))
+        print("{:<15}: {}".format("Validity", m["SMSC"]["Validity"]))
+        loc = []
+        for m in x:
+            loc.append(str(m["Location"]))
+        print("{:<15}: {}".format("Location(s)", ", ".join(loc)))
+        if v is None:
+            print("\n{}".format(m["Text"]))
+            parseSMS(state_machine, m["Number"], m["Text"])
+        else:
+            print("Long sms or not supported")
+            # for e in v["Entries"]:
+            #     print()
+            #     print("{:<15}: {}".format("Type", e["ID"]))
+            #     if e["Bitmap"] is not None:
+            #         for bmp in e["Bitmap"]:
+            #             print("Bitmap:")
+            #             for row in bmp["XPM"][3:]:
+            #                 print(row)
+            #         print()
+            #     if e["Buffer"] is not None:
+            #         print("Text:")
+            #         print(e["Buffer"])
+            #         print()
+receiveSMS()
