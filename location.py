@@ -94,6 +94,6 @@ def getLocation():
             ser.close()
         GPIO.cleanup()
     if utc_time == None or latitude == None or longitude == None:
-        return "Cant get location right now, try again later"
+        return None, None, None
     
-    return f"{latitude},{longitude}\nhttps://www.google.com/maps/search/?api=1&query={latitude},{longitude}\n{utc_time}"
+    return latitude, longitude, utc_time

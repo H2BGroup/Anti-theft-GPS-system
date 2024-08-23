@@ -30,8 +30,11 @@ def parseSMS(state_machine, sender, content):
 		return
 
 	if content == "location":
-		location = getLocation()
-		sendSMS(state_machine, sender, f"My location: {location}")
+		latitude, longitude, time = getLocation()
+		if latitude != None:
+			sendSMS(state_machine, sender, f"My location: {latitude},{longitude}\nhttps://www.google.com/maps/search/?api=1&query={latitude},{longitude}\n{time}")
+		else:
+			sendSMS(state_machine, sender, "Cant get location right now, try again later")
 		return
 	if content == "status":
 		sendSMS(state_machine, sender, "My status: status")

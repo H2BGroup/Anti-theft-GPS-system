@@ -20,8 +20,13 @@ def parseRabbit(body, reply_channel, reply_queue):
 
     if message['request']:
         if message['request'] == 'location':
-            location = getLocation()
-            replyRabbit(location, reply_channel, reply_queue)
+            latitude, longitude, time = getLocation()
+            location = {
+                "latitude": latitude,
+                "longitude": longitude,
+                "utc_time": time
+            }
+            replyRabbit(json.dumps(location), reply_channel, reply_queue)
             return
         if message['request'] == 'status':
             replyRabbit("My status: status", reply_channel, reply_queue)
