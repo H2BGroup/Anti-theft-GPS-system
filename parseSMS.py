@@ -1,4 +1,3 @@
-import os
 from sendSMS import sendSMS
 from location import getLocation
 import json
@@ -10,7 +9,7 @@ availableCommands = {
 	'status': 'Sends device current status (battery, connection, etc.)',
 }
 
-def parseSMS(sender, content):
+def parseSMS(state_machine, sender, content):
 	f = open(CONFIG_FILE)
 	data = json.load(f)
 	f.close()
@@ -24,7 +23,7 @@ def parseSMS(sender, content):
 		f = open(CONFIG_FILE, 'w')
 		json.dump(data, f)
 		f.close()
-		sendSMS(sender, f"Hello new user, the device has been successfully linked. You can now use my commands: \n"+json.dumps(availableCommands, indent='\n')[2:-1])
+		sendSMS(state_machine, sender, f"Hello new user, the device has been successfully linked. You can now use my commands: \n"+json.dumps(availableCommands, indent='\n')[2:-1])
 		return
 
 	if sender != owner_number:
@@ -32,9 +31,9 @@ def parseSMS(sender, content):
 
 	if content == "location":
 		location = getLocation()
-		sendSMS(sender, f"My location: {location}")
+		sendSMS(state_machine, sender, f"My location: {location}")
 		return
 	if content == "status":
-		sendSMS(sender, "My status: status")
+		sendSMS(state_machine, sender, "My status: status")
 		return
-	sendSMS(sender, "Unknown command, my commands are: \n"+json.dumps(availableCommands, indent='\n')[2:-1])
+	sendSMS(state_machine, sender, "Unknown command, my commands are: \n"+json.dumps(availableCommands, indent='\n')[2:-1])
