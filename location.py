@@ -5,13 +5,10 @@ import serial
 import time
 from datetime import datetime
 
-ser = serial.Serial('/dev/ttyS0', 115200)
-ser.flushInput()
-
 power_key = 4
 MAX_RETRIES = 10
 
-def send_at(command, back, timeout):
+def send_at(ser, command, back, timeout):
     ser.write((command + '\r\n').encode())
     print(f'Sent: {command}')
     time.sleep(timeout)
@@ -29,16 +26,16 @@ def send_at(command, back, timeout):
     print('No response or GPS is not ready')
     return None
 
-def get_gps_position():
+def get_gps_position(ser):
     print('Start GPS session...')
-    send_at('AT+CGNSPWR=1', 'OK', 1)
+    send_at(ser, 'AT+CGNSPWR=1', 'OK', 1)
     time.sleep(2)
     retries = 0
     
     while True:
         if retries >= MAX_RETRIES:
             return None, None, None
-        response = send_at('AT+CGNSINF', '+CGNSINF: ', 1)
+        response = send_at(ser, 'AT+CGNSINF', '+CGNSINF: ', 1)
         if response:
             if ',,,,,,' not in response:
                 gps_data = response.split(',')
@@ -61,7 +58,7 @@ def get_gps_position():
             time.sleep(1.5)
             retries += 1
 
-def power_on(power_key):
+def power_on(ser, power_key):
     print('SIM7600X is starting:')
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
@@ -84,8 +81,10 @@ def power_down(power_key):
 
 def getLocation():
     try:
-        power_on(power_key)
-        utc_time, latitude, longitude = get_gps_position()
+        ser = serial.Serial('/dev/ttyS0', 115200)
+        ser.flushInput()
+        power_on(ser, power_key)
+        utc_time, latitude, longitude = get_gps_position(ser)
         power_down(power_key)
     except Exception as e:
         print(f"An error occurred: {e}")
