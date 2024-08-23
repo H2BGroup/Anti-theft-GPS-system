@@ -1,4 +1,5 @@
 from receiveSMS import receiveSMS
+from rabbit import checkRabbit
 import time
 import gammu
 
@@ -16,7 +17,8 @@ def main():
             print("Check sms")
             receiveSMS(state_machine)
             time.sleep(PAUSE_DURATION)
-            print("Check internet - to be implemented")
+            print("Check internet")
+            checkRabbit()
             time.sleep(SCAN_EVERY)
     except KeyboardInterrupt:
         print("Interrupted, cleaning up before exiting")
