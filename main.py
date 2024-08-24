@@ -1,26 +1,24 @@
 from receiveSMS import receiveSMS
+from rabbit import checkRabbit
+from location import setupGPS, power_down
 import time
-import gammu
 
 SCAN_EVERY = 10 #seconds
 PAUSE_DURATION = 1
 
 def main():
-
-    state_machine = gammu.StateMachine()
-    state_machine.ReadConfig()
-    state_machine.Init()
-
+    setupGPS()
     try:
         while True:
             print("Check sms")
-            receiveSMS(state_machine)
+            receiveSMS()
             time.sleep(PAUSE_DURATION)
-            print("Check internet - to be implemented")
+            print("Check internet")
+            checkRabbit()
             time.sleep(SCAN_EVERY)
     except KeyboardInterrupt:
         print("Interrupted, cleaning up before exiting")
-        state_machine.Terminate()
+        power_down()
     finally:
         print("Exiting")
 

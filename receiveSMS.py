@@ -20,9 +20,14 @@
 #
 
 from parseSMS import parseSMS
+from sendSMS import sendSMS
 import gammu
 
-def receiveSMS(state_machine):
+def receiveSMS():
+
+    state_machine = gammu.StateMachine()
+    state_machine.ReadConfig()
+    state_machine.Init()
 
     status = state_machine.GetSMSStatus()
 
@@ -46,7 +51,12 @@ def receiveSMS(state_machine):
         # It can happen when reported status does not match real counts
         print("Failed to read all messages!")
 
+    state_machine.Terminate()
+    state_machine = None
+
     data = gammu.LinkSMS(sms)
+
+    responses = []
 
     for x in data:
         v = gammu.DecodeSMS(x)
@@ -64,7 +74,9 @@ def receiveSMS(state_machine):
         print("{:<15}: {}".format("Location(s)", ", ".join(loc)))
         if v is None:
             print("\n{}".format(m["Text"]))
-            parseSMS(state_machine, m["Number"], m["Text"])
+            res = parseSMS(m["Number"], m["Text"])
+            if res != None:
+                responses.append(res)
         else:
             print("Long sms or not supported")
             # for e in v["Entries"]:
@@ -80,3 +92,13 @@ def receiveSMS(state_machine):
             #         print("Text:")
             #         print(e["Buffer"])
             #         print()
+    
+    state_machine = gammu.StateMachine()
+    state_machine.ReadConfig()
+    state_machine.Init()
+
+    for res in responses:
+        sendSMS(state_machine, res[0], res[1])
+    
+    state_machine.Terminate()
+    state_machine = None
