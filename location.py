@@ -27,9 +27,6 @@ def send_at(ser, command, back, timeout):
     return None
 
 def get_gps_position(ser):
-    print('Start GPS session...')
-    send_at(ser, 'AT+CGNSPWR=1', 'OK', 1)
-    time.sleep(2)
     retries = 0
     
     while True:
@@ -71,21 +68,39 @@ def power_on(ser, power_key):
     ser.flushInput()
     print('SIM7600X is ready')
 
-def power_down(power_key):
+def power_down():
     print('SIM7600X is logging off:')
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False)
+    GPIO.setup(power_key, GPIO.OUT)
+    time.sleep(0.1)
     GPIO.output(power_key, GPIO.HIGH)
     time.sleep(3)
     GPIO.output(power_key, GPIO.LOW)
     time.sleep(2)
+    GPIO.cleanup()
     print('Good bye')
+
+def setupGPS():
+    ser = serial.Serial('/dev/ttyS0', 115200)
+    ser.flushInput()
+    power_on(ser, power_key)
+
+    print('Start GPS session...')
+    send_at(ser, 'AT+CGNSPWR=1', 'OK', 1)
+    time.sleep(1)
+
+    ser.close()
+    ser=None
+    GPIO.cleanup()
 
 def getLocation():
     try:
         ser = serial.Serial('/dev/ttyS0', 115200)
         ser.flushInput()
-        power_on(ser, power_key)
+        # power_on(ser, power_key)
         utc_time, latitude, longitude = get_gps_position(ser)
-        power_down(power_key)
+        # power_down(power_key)
     except Exception as e:
         print(f"An error occurred: {e}")
     finally:
