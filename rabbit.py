@@ -1,6 +1,8 @@
 import json
 import pika
 from location import getLocation
+import os
+import time
 
 CONFIG_FILE = '/home/ASGDR/Anti-theft-GPS-system/config.json'
 
@@ -39,6 +41,8 @@ def parseRabbit(body):
 
 
 def checkRabbit():
+    os.system("sudo pon rnet")
+    time.sleep(1)
     f = open(CONFIG_FILE)
     config = json.load(f)
     f.close()
@@ -63,6 +67,8 @@ def checkRabbit():
     
     connection.close()
     connection = None
+    os.system("sudo poff rnet")
+    time.sleep(1)
 
     responses = []
 
@@ -72,6 +78,8 @@ def checkRabbit():
             responses.append(res)
 
     if len(responses) > 0:
+        os.system("sudo pon rnet")
+        time.sleep(1)
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['rabbit_host'], virtual_host=config['rabbit_user'], credentials=pika.PlainCredentials(config['rabbit_user'], config['rabbit_password'])))
 
         reply_channel = connection.channel()
@@ -81,3 +89,6 @@ def checkRabbit():
             replyRabbit(res, reply_channel, config['owner_number'])
 
         connection.close()
+        connection = None
+        os.system("sudo poff rnet")
+        time.sleep(1)
