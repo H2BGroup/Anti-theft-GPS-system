@@ -194,5 +194,6 @@ def getBatteryStatus():
     bus_voltage = ina219.getBusVoltage_V()
     percent = (bus_voltage - 3)/1.2*100 
     current = ina219.getCurrent_mA()
-
+    
+    print(f"Percent: {percent}%, Current: {current}")
     return percent, current

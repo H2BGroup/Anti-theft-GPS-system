@@ -21,7 +21,7 @@ def parseRabbit(body):
         print("Error decoding message")
         return None
 
-    if message['request']:
+    if 'request' in message:
         if message['request'] == 'location':
             latitude, longitude, time = getLocation()
             location = {
