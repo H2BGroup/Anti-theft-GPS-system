@@ -42,7 +42,9 @@ def parseRabbit(body):
 
 def checkRabbit():
     os.system("sudo pon rnet")
-    time.sleep(1)
+    #wait until network adapter called ppp0 with state UNKNOWN shows up
+    while os.system("ip link show | grep ppp0 | grep UNKNOWN > /dev/null") != 0:
+        time.sleep(0.5)
     f = open(CONFIG_FILE)
     config = json.load(f)
     f.close()
@@ -68,7 +70,9 @@ def checkRabbit():
     connection.close()
     connection = None
     os.system("sudo poff rnet")
-    time.sleep(1)
+    #wait while device called ppp0 is visible
+    while os.system("ip link show | grep ppp0 > /dev/null") == 0:
+        time.sleep(0.5)
 
     responses = []
 
@@ -79,7 +83,8 @@ def checkRabbit():
 
     if len(responses) > 0:
         os.system("sudo pon rnet")
-        time.sleep(1)
+        while os.system("ip link show | grep ppp0 | grep UNKNOWN > /dev/null") != 0:
+            time.sleep(0.5)
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['rabbit_host'], virtual_host=config['rabbit_user'], credentials=pika.PlainCredentials(config['rabbit_user'], config['rabbit_password'])))
 
         reply_channel = connection.channel()
@@ -91,4 +96,5 @@ def checkRabbit():
         connection.close()
         connection = None
         os.system("sudo poff rnet")
-        time.sleep(1)
+        while os.system("ip link show | grep ppp0 > /dev/null") == 0:
+            time.sleep(0.5)

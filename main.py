@@ -3,7 +3,7 @@ from rabbit import checkRabbit
 from location import setupGPS, power_down
 import time
 
-SCAN_EVERY = 10 #seconds
+SCAN_EVERY = 2 #seconds
 PAUSE_DURATION = 1
 
 def main():
