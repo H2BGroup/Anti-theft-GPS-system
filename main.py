@@ -3,11 +3,14 @@ from rabbit import checkRabbit
 from location import setupGPS, power_down
 import time
 
-SCAN_EVERY = 2 #seconds
+SCAN_EVERY = 5 #seconds
 PAUSE_DURATION = 1
 
 def main():
-    setupGPS()
+    GPS_on = setupGPS()
+    if GPS_on != True:
+        print("ERROR Couldn't start GPS")
+        return
     try:
         while True:
             print("Check sms")
