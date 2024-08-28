@@ -35,7 +35,7 @@ def parseSMS(sender, content):
 		else:
 			return (sender, "Cant get location right now, try again later")
 	if content == "status":
-		percent, current = battery.getBatteryStatus()
+		percent, current, utc_time = battery.getBatteryStatus()
 		if percent != None:
 			return (sender, f"Status:\nBattery: {percent:3.1f}% {'Charging' if current > 0 else 'Unplugged'}")
 		else:

@@ -1,6 +1,7 @@
 # this file is a modified version of demo code from: https://files.waveshare.com/upload/4/40/UPS_HAT_C.7z
 import smbus
 import time
+import datetime
 
 # Config Register (R/W)
 _REG_CONFIG                 = 0x00
@@ -194,6 +195,6 @@ def getBatteryStatus():
     bus_voltage = ina219.getBusVoltage_V()
     percent = (bus_voltage - 3)/1.2*100 
     current = ina219.getCurrent_mA()
-    
-    print(f"Percent: {percent}%, Current: {current}")
-    return percent, current
+    utc_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    print(f"Percent: {percent}%, Current: {current}, UTC_time: {utc_time}")
+    return percent, current, utc_time

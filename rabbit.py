@@ -32,11 +32,12 @@ def parseRabbit(body):
             }
             return json.dumps(location)
         if message['request'] == 'status':
-            percent, current = battery.getBatteryStatus()
+            percent, current, utc_time = battery.getBatteryStatus()
             status = {
                 "type": "status",
                 "percent": percent,
-                "charging": True if current > 0 else False
+                "charging": True if current > 0 else False,
+                "utc_time": utc_time
             }
             return json.dumps(status)
 
