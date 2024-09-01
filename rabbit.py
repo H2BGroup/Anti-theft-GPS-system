@@ -3,6 +3,7 @@ import pika
 from location import getLocation
 import os
 import time
+import battery
 
 CONFIG_FILE = '/home/ASGDR/Anti-theft-GPS-system/config.json'
 
@@ -20,7 +21,7 @@ def parseRabbit(body):
         print("Error decoding message")
         return None
 
-    if message['request']:
+    if 'request' in message:
         if message['request'] == 'location':
             latitude, longitude, time = getLocation()
             location = {
@@ -29,13 +30,14 @@ def parseRabbit(body):
                 "longitude": longitude,
                 "utc_time": time
             }
-            # replyRabbit(json.dumps(location), reply_channel, reply_queue)
             return json.dumps(location)
         if message['request'] == 'status':
-            # replyRabbit("My status: status", reply_channel, reply_queue)
+            percent, current, utc_time = battery.getBatteryStatus()
             status = {
                 "type": "status",
-                "battery": "Battery"
+                "percent": percent,
+                "charging": True if current > 0 else False,
+                "utc_time": utc_time
             }
             return json.dumps(status)
 
