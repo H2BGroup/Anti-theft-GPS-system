@@ -5,7 +5,7 @@ import os
 import time
 import battery
 
-CONFIG_FILE = '/home/ASGDR/Anti-theft-GPS-system/config.json'
+CONFIG_FILE = '/usr/local/sbin/Anti-theft-GPS-system/config.json'
 
 def replyRabbit(message, reply_channel, reply_queue):
     reply_channel.basic_publish(

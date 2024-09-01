@@ -2,7 +2,7 @@ from location import getLocation
 import battery
 import json
 
-CONFIG_FILE = '/home/ASGDR/Anti-theft-GPS-system/config.json'
+CONFIG_FILE = '/usr/local/sbin/Anti-theft-GPS-system/config.json'
 
 availableCommands = {
 	'location': 'Sends device current location',
