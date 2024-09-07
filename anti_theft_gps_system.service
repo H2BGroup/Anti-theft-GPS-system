@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 User=root
-ExecStart=/usr/bin/python /usr/local/sbin/Anti-theft-GPS-system/main.py
+ExecStart=/usr/bin/python -u /usr/local/sbin/Anti-theft-GPS-system/main.py
 Restart=always
 
 [Install]
