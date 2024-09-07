@@ -46,12 +46,20 @@ def checkRabbit():
     os.system("sudo pon rnet")
     #wait until network adapter called ppp0 with state UNKNOWN shows up
     while os.system("ip link show | grep ppp0 | grep UNKNOWN > /dev/null") != 0:
+        print("waiting for ppp0")
         time.sleep(0.5)
     f = open(CONFIG_FILE)
     config = json.load(f)
     f.close()
 
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['rabbit_host'], virtual_host=config['rabbit_user'], credentials=pika.PlainCredentials(config['rabbit_user'], config['rabbit_password'])))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(
+                                        host=config['rabbit_host'], 
+                                        virtual_host=config['rabbit_user'], 
+                                        credentials=pika.PlainCredentials(config['rabbit_user'], config['rabbit_password']), 
+                                        socket_timeout=20.0,
+                                        stack_timeout=30.0,
+                                        retry_delay=5.0,
+                                        connection_attempts=3))
     
     channel = connection.channel()
     channel.queue_declare(queue=config['device_number'], durable=True)
@@ -74,6 +82,7 @@ def checkRabbit():
     os.system("sudo poff rnet")
     #wait while device called ppp0 is visible
     while os.system("ip link show | grep ppp0 > /dev/null") == 0:
+        print("waiting for ppp0 to turn off")
         time.sleep(0.5)
 
     responses = []
@@ -84,10 +93,19 @@ def checkRabbit():
             responses.append(res)
 
     if len(responses) > 0:
+        time.sleep(1.0)
         os.system("sudo pon rnet")
         while os.system("ip link show | grep ppp0 | grep UNKNOWN > /dev/null") != 0:
+            print("waiting for ppp0")
             time.sleep(0.5)
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['rabbit_host'], virtual_host=config['rabbit_user'], credentials=pika.PlainCredentials(config['rabbit_user'], config['rabbit_password'])))
+        connection = pika.BlockingConnection(pika.ConnectionParameters(
+                                            host=config['rabbit_host'], 
+                                            virtual_host=config['rabbit_user'], 
+                                            credentials=pika.PlainCredentials(config['rabbit_user'], config['rabbit_password']), 
+                                            socket_timeout=20.0,
+                                            stack_timeout=30.0,
+                                            retry_delay=5.0,
+                                            connection_attempts=3))
 
         reply_channel = connection.channel()
         reply_channel.queue_declare(queue=config['owner_number'], durable=True)
@@ -99,4 +117,5 @@ def checkRabbit():
         connection = None
         os.system("sudo poff rnet")
         while os.system("ip link show | grep ppp0 > /dev/null") == 0:
+            print("waiting for ppp0 to turn off")
             time.sleep(0.5)
