@@ -7,6 +7,8 @@ import battery
 
 CONFIG_FILE = '/usr/local/sbin/Anti-theft-GPS-system/config.json'
 
+PPP_TIMEOUT = 10.0 #seconds
+
 def replyRabbit(message, reply_channel, reply_queue):
     reply_channel.basic_publish(
         exchange='',
@@ -45,9 +47,13 @@ def parseRabbit(body):
 def checkRabbit():
     os.system("sudo pon rnet")
     #wait until network adapter called ppp0 with state UNKNOWN shows up
+    wait_ppp = 0
     while os.system("ip link show | grep ppp0 | grep UNKNOWN > /dev/null") != 0:
         print("waiting for ppp0")
         time.sleep(0.5)
+        wait_ppp+=0.5
+        if wait_ppp >= PPP_TIMEOUT:
+            raise SystemExit("Error setting up pppd")
     f = open(CONFIG_FILE)
     config = json.load(f)
     f.close()
@@ -95,9 +101,13 @@ def checkRabbit():
     if len(responses) > 0:
         time.sleep(1.0)
         os.system("sudo pon rnet")
+        wait_ppp = 0
         while os.system("ip link show | grep ppp0 | grep UNKNOWN > /dev/null") != 0:
             print("waiting for ppp0")
             time.sleep(0.5)
+            wait_ppp+=0.5
+            if wait_ppp >= PPP_TIMEOUT:
+                raise SystemExit("Error setting up pppd")
         connection = pika.BlockingConnection(pika.ConnectionParameters(
                                             host=config['rabbit_host'], 
                                             virtual_host=config['rabbit_user'], 
