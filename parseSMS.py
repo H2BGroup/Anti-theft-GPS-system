@@ -1,7 +1,8 @@
 from location import getLocation
+import battery
 import json
 
-CONFIG_FILE = '/home/ASGDR/Anti-theft-GPS-system/config.json'
+CONFIG_FILE = '/usr/local/sbin/Anti-theft-GPS-system/config.json'
 
 availableCommands = {
 	'location': 'Sends device current location',
@@ -34,6 +35,10 @@ def parseSMS(sender, content):
 		else:
 			return (sender, "Cant get location right now, try again later")
 	if content == "status":
-		return (sender, "My status: status")
+		percent, current, utc_time = battery.getBatteryStatus()
+		if percent != None:
+			return (sender, f"Status:\nBattery: {percent:3.1f}% {'Charging' if current > 0 else 'Unplugged'}")
+		else:
+			return (sender, "Status: Unknown battery status")
 	
 	return (sender, "Unknown command, my commands are: \n"+json.dumps(availableCommands, indent='\n')[2:-1])

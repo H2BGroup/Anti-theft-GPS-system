@@ -2,12 +2,21 @@ from receiveSMS import receiveSMS
 from rabbit import checkRabbit
 from location import setupGPS, power_down
 import time
+import os
 
-SCAN_EVERY = 10 #seconds
+SCAN_EVERY = 5 #seconds
 PAUSE_DURATION = 1
 
 def main():
-    setupGPS()
+    # make sure internet if off so gps can setup properly
+    os.system("sudo poff rnet")
+    while os.system("ip link show | grep ppp0 > /dev/null") == 0:
+        time.sleep(0.5)
+
+    GPS_on = setupGPS()
+    if GPS_on != True:
+        print("ERROR Couldn't start GPS")
+        return
     try:
         while True:
             print("Check sms")

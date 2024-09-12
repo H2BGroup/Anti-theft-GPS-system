@@ -1,0 +1,11 @@
+[Unit]
+Description=Anti-theft GPS system service
+After=network.target
+
+[Service]
+User=root
+ExecStart=/usr/bin/python -u /usr/local/sbin/Anti-theft-GPS-system/main.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

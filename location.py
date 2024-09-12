@@ -87,14 +87,28 @@ def setupGPS():
     power_on(ser, power_key)
 
     print('Start GPS session...')
-    send_at(ser, 'AT+CGNSPWR=1', 'OK', 1)
+    success = False
+    tries = 0
+    while tries <= MAX_RETRIES:
+        tries += 1
+        response = send_at(ser, 'AT+CGNSPWR=1', 'OK', 1)
+        if response != None:
+            success = True
+            break    
+    
     time.sleep(1)
 
     ser.close()
     ser=None
     GPIO.cleanup()
 
+    return success
+
 def getLocation():
+    utc_time = None
+    latitude = None
+    longitude = None
+    
     try:
         ser = serial.Serial('/dev/ttyS0', 115200)
         ser.flushInput()
