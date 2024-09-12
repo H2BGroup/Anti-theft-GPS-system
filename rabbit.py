@@ -5,7 +5,9 @@ import os
 import time
 import battery
 
-CONFIG_FILE = '/home/ASGDR/Anti-theft-GPS-system/config.json'
+CONFIG_FILE = '/usr/local/sbin/Anti-theft-GPS-system/config.json'
+
+PPP_TIMEOUT = 10.0 #seconds
 
 def replyRabbit(message, reply_channel, reply_queue):
     reply_channel.basic_publish(
@@ -45,13 +47,25 @@ def parseRabbit(body):
 def checkRabbit():
     os.system("sudo pon rnet")
     #wait until network adapter called ppp0 with state UNKNOWN shows up
+    wait_ppp = 0
     while os.system("ip link show | grep ppp0 | grep UNKNOWN > /dev/null") != 0:
+        print("waiting for ppp0")
         time.sleep(0.5)
+        wait_ppp+=0.5
+        if wait_ppp >= PPP_TIMEOUT:
+            raise SystemExit("Error setting up pppd")
     f = open(CONFIG_FILE)
     config = json.load(f)
     f.close()
 
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['rabbit_host'], virtual_host=config['rabbit_user'], credentials=pika.PlainCredentials(config['rabbit_user'], config['rabbit_password'])))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(
+                                        host=config['rabbit_host'], 
+                                        virtual_host=config['rabbit_user'], 
+                                        credentials=pika.PlainCredentials(config['rabbit_user'], config['rabbit_password']), 
+                                        socket_timeout=20.0,
+                                        stack_timeout=30.0,
+                                        retry_delay=5.0,
+                                        connection_attempts=3))
     
     channel = connection.channel()
     channel.queue_declare(queue=config['device_number'], durable=True)
@@ -74,6 +88,7 @@ def checkRabbit():
     os.system("sudo poff rnet")
     #wait while device called ppp0 is visible
     while os.system("ip link show | grep ppp0 > /dev/null") == 0:
+        print("waiting for ppp0 to turn off")
         time.sleep(0.5)
 
     responses = []
@@ -84,10 +99,23 @@ def checkRabbit():
             responses.append(res)
 
     if len(responses) > 0:
+        time.sleep(1.0)
         os.system("sudo pon rnet")
+        wait_ppp = 0
         while os.system("ip link show | grep ppp0 | grep UNKNOWN > /dev/null") != 0:
+            print("waiting for ppp0")
             time.sleep(0.5)
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host=config['rabbit_host'], virtual_host=config['rabbit_user'], credentials=pika.PlainCredentials(config['rabbit_user'], config['rabbit_password'])))
+            wait_ppp+=0.5
+            if wait_ppp >= PPP_TIMEOUT:
+                raise SystemExit("Error setting up pppd")
+        connection = pika.BlockingConnection(pika.ConnectionParameters(
+                                            host=config['rabbit_host'], 
+                                            virtual_host=config['rabbit_user'], 
+                                            credentials=pika.PlainCredentials(config['rabbit_user'], config['rabbit_password']), 
+                                            socket_timeout=20.0,
+                                            stack_timeout=30.0,
+                                            retry_delay=5.0,
+                                            connection_attempts=3))
 
         reply_channel = connection.channel()
         reply_channel.queue_declare(queue=config['owner_number'], durable=True)
@@ -99,4 +127,5 @@ def checkRabbit():
         connection = None
         os.system("sudo poff rnet")
         while os.system("ip link show | grep ppp0 > /dev/null") == 0:
+            print("waiting for ppp0 to turn off")
             time.sleep(0.5)
