@@ -45,6 +45,26 @@ def parseRabbit(body):
             }
             return status
         return None
+    
+    elif 'armed' in message:
+        armed = message['armed']
+        print(f'ARMED: {armed}, type: {type(armed)}')
+
+        f = open(CONFIG_FILE)
+        config = json.load(f)
+        f.close()
+
+        config['armed'] = armed
+
+        f = open(CONFIG_FILE, 'w')
+        json.dump(config, f)
+        f.close()
+
+        response = {
+            "device_armed": armed
+        }
+        return response
+    return None
 
 
 def checkRabbit():
@@ -123,6 +143,15 @@ def checkRabbit():
         print("waiting for ppp0 to turn off")
         time.sleep(0.5)
     time.sleep(1)
+
+    # check if device armed
+    if 'armed' in config:
+        if config['armed'] == True:
+            print("device armed, will send update")
+            messages.append('{"request": "location"}')
+            messages.append('{"request": "status"}')
+
+
     print("Preparing responses")
 
     # respond to each type of message once (no need to send the same location x times)
