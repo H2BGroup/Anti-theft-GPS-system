@@ -36,6 +36,7 @@ def receiveSMS():
     sms = []
     start = True
 
+    print("connected to phone, getting messages")
     try:
         while remain > 0:
             if start:
@@ -56,6 +57,7 @@ def receiveSMS():
 
     data = gammu.LinkSMS(sms)
 
+    print("finished receiving messages")
     responses = []
 
     for x in data:
@@ -92,13 +94,14 @@ def receiveSMS():
             #         print("Text:")
             #         print(e["Buffer"])
             #         print()
-    
-    state_machine = gammu.StateMachine()
-    state_machine.ReadConfig()
-    state_machine.Init()
+    if len(responses) > 0:
+        print("responding to messages")
+        state_machine = gammu.StateMachine()
+        state_machine.ReadConfig()
+        state_machine.Init()
 
-    for res in responses:
-        sendSMS(state_machine, res[0], res[1])
-    
-    state_machine.Terminate()
-    state_machine = None
+        for res in responses:
+            sendSMS(state_machine, res[0], res[1])
+        
+        state_machine.Terminate()
+        state_machine = None
