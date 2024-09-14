@@ -56,6 +56,8 @@ def checkRabbit():
         wait_ppp+=0.5
         if wait_ppp >= PPP_TIMEOUT:
             raise SystemExit("Error setting up pppd")
+        
+    print("internet connection successfull")
     f = open(CONFIG_FILE)
     config = json.load(f)
     f.close()
@@ -91,6 +93,11 @@ def checkRabbit():
         for res in previous_responses:
             res_str = json.dumps(res)
             replyRabbit(res_str, reply_channel, config['owner_number'])
+        
+        # clear outgoing messages queue
+        temp_file = open(TEMP_MESSAGE_FILE)
+        json.dump([], temp_file)
+        temp_file.close()
 
     # receive new messages
     print("Downloading new messages")
@@ -123,7 +130,8 @@ def checkRabbit():
         if res != None:
             responses.append(res)
     
-    #save responses for next cycle
-    temp_file = open(TEMP_MESSAGE_FILE, 'w')
-    json.dump(responses, temp_file)
-    temp_file.close()
+    if len(responses) > 0:
+        #save responses for next cycle
+        temp_file = open(TEMP_MESSAGE_FILE, 'w')
+        json.dump(responses, temp_file)
+        temp_file.close()
