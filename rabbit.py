@@ -4,8 +4,10 @@ from location import getLocation
 import os
 import time
 import battery
+from collections import Counter
 
 CONFIG_FILE = '/usr/local/sbin/Anti-theft-GPS-system/config.json'
+TEMP_MESSAGE_FILE = '/usr/local/sbin/Anti-theft-GPS-system/rabbit_temp.json'
 
 PPP_TIMEOUT = 10.0 #seconds
 
@@ -32,7 +34,7 @@ def parseRabbit(body):
                 "longitude": longitude,
                 "utc_time": time
             }
-            return json.dumps(location)
+            return location
         if message['request'] == 'status':
             percent, current, utc_time = battery.getBatteryStatus()
             status = {
@@ -41,7 +43,8 @@ def parseRabbit(body):
                 "charging": True if current > 0 else False,
                 "utc_time": utc_time
             }
-            return json.dumps(status)
+            return status
+        return None
 
 
 def checkRabbit():
@@ -54,6 +57,8 @@ def checkRabbit():
         wait_ppp+=0.5
         if wait_ppp >= PPP_TIMEOUT:
             raise SystemExit("Error setting up pppd")
+        
+    print("internet connection successfull")
     f = open(CONFIG_FILE)
     config = json.load(f)
     f.close()
@@ -69,7 +74,34 @@ def checkRabbit():
     
     channel = connection.channel()
     channel.queue_declare(queue=config['device_number'], durable=True)
+    print("connected to rabbit")
 
+    # send responses from previous cycle
+    previous_responses = []
+    
+    try:
+        temp_file = open(TEMP_MESSAGE_FILE)
+        previous_responses = json.load(temp_file)
+        temp_file.close()
+    except:
+        previous_responses = []
+    
+    if len(previous_responses) > 0:
+        print("Sending responses from previous cycle")
+        reply_channel = connection.channel()
+        reply_channel.queue_declare(queue=config['owner_number'], durable=True)
+
+        for res in previous_responses:
+            res_str = json.dumps(res)
+            replyRabbit(res_str, reply_channel, config['owner_number'])
+        
+        # clear outgoing messages queue
+        temp_file = open(TEMP_MESSAGE_FILE, 'w')
+        json.dump([], temp_file)
+        temp_file.close()
+
+    # receive new messages
+    print("Downloading new messages")
     messages = []
 
     while True:
@@ -90,42 +122,22 @@ def checkRabbit():
     while os.system("ip link show | grep ppp0 > /dev/null") == 0:
         print("waiting for ppp0 to turn off")
         time.sleep(0.5)
+    time.sleep(1)
+    print("Preparing responses")
+
+    # respond to each type of message once (no need to send the same location x times)
+    unique_messages = Counter(messages)
+    print(f"Received messages: \n{unique_messages}")
 
     responses = []
 
-    for m in messages:
+    for m in unique_messages.keys():
         res = parseRabbit(m)
         if res != None:
             responses.append(res)
-
+    
     if len(responses) > 0:
-        time.sleep(1.0)
-        os.system("sudo pon rnet")
-        wait_ppp = 0
-        while os.system("ip link show | grep ppp0 | grep UNKNOWN > /dev/null") != 0:
-            print("waiting for ppp0")
-            time.sleep(0.5)
-            wait_ppp+=0.5
-            if wait_ppp >= PPP_TIMEOUT:
-                raise SystemExit("Error setting up pppd")
-        connection = pika.BlockingConnection(pika.ConnectionParameters(
-                                            host=config['rabbit_host'], 
-                                            virtual_host=config['rabbit_user'], 
-                                            credentials=pika.PlainCredentials(config['rabbit_user'], config['rabbit_password']), 
-                                            socket_timeout=20.0,
-                                            stack_timeout=30.0,
-                                            retry_delay=5.0,
-                                            connection_attempts=3))
-
-        reply_channel = connection.channel()
-        reply_channel.queue_declare(queue=config['owner_number'], durable=True)
-
-        for res in responses:
-            replyRabbit(res, reply_channel, config['owner_number'])
-
-        connection.close()
-        connection = None
-        os.system("sudo poff rnet")
-        while os.system("ip link show | grep ppp0 > /dev/null") == 0:
-            print("waiting for ppp0 to turn off")
-            time.sleep(0.5)
+        #save responses for next cycle
+        temp_file = open(TEMP_MESSAGE_FILE, 'w')
+        json.dump(responses, temp_file)
+        temp_file.close()
