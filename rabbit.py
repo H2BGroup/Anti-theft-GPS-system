@@ -4,6 +4,7 @@ from location import getLocation
 import os
 import time
 import battery
+from collections import Counter
 
 CONFIG_FILE = '/usr/local/sbin/Anti-theft-GPS-system/config.json'
 TEMP_MESSAGE_FILE = '/usr/local/sbin/Anti-theft-GPS-system/rabbit_temp.json'
@@ -95,7 +96,7 @@ def checkRabbit():
             replyRabbit(res_str, reply_channel, config['owner_number'])
         
         # clear outgoing messages queue
-        temp_file = open(TEMP_MESSAGE_FILE)
+        temp_file = open(TEMP_MESSAGE_FILE, 'w')
         json.dump([], temp_file)
         temp_file.close()
 
@@ -123,9 +124,14 @@ def checkRabbit():
         time.sleep(0.5)
     time.sleep(1)
     print("Preparing responses")
+
+    # respond to each type of message once (no need to send the same location x times)
+    unique_messages = Counter(messages)
+    print(f"Received messages: \n{unique_messages}")
+
     responses = []
 
-    for m in messages:
+    for m in unique_messages.keys():
         res = parseRabbit(m)
         if res != None:
             responses.append(res)

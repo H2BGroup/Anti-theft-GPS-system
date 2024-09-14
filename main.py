@@ -24,7 +24,7 @@ def main():
             time.sleep(PAUSE_DURATION)
             print("Check internet")
             checkRabbit()
-            time.sleep(PAUSE_DURATION)
+            time.sleep(SCAN_EVERY)
     except KeyboardInterrupt:
         print("Interrupted, cleaning up before exiting")
         power_down()
