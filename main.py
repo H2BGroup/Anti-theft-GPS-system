@@ -1,6 +1,6 @@
 from receiveSMS import receiveSMS
 from rabbit import checkRabbit
-from location import setupGPS, power_down
+from location import setupGPS, power_down, power_key
 import time
 import os
 
@@ -19,15 +19,15 @@ def main():
         return
     try:
         while True:
-            print("Check sms")
-            receiveSMS()
-            time.sleep(PAUSE_DURATION)
             print("Check internet")
             checkRabbit()
+            time.sleep(PAUSE_DURATION)
+            print("Check sms")
+            receiveSMS()
             time.sleep(SCAN_EVERY)
-    except KeyboardInterrupt:
+    except:
         print("Interrupted, cleaning up before exiting")
-        power_down()
+        power_down(power_key)
     finally:
         print("Exiting")
 
