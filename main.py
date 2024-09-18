@@ -25,7 +25,7 @@ def main():
             print("Check sms")
             receiveSMS()
             time.sleep(SCAN_EVERY)
-    except:
+    except KeyboardInterrupt:
         print("Interrupted, cleaning up before exiting")
         power_down(power_key)
     finally:

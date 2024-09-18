@@ -36,11 +36,15 @@ def parseRabbit(body):
             }
             return location
         if message['request'] == 'status':
+            f = open(CONFIG_FILE)
+            config = json.load(f)
+            f.close()
             percent, current, utc_time = battery.getBatteryStatus()
             status = {
                 "type": "status",
                 "percent": percent,
                 "charging": True if current > 0 else False,
+                "device_armed": config['armed'],
                 "utc_time": utc_time
             }
             return status
@@ -153,14 +157,17 @@ def checkRabbit():
 
 
     print("Preparing responses")
-
-    # respond to each type of message once (no need to send the same location x times)
-    unique_messages = Counter(messages)
+    # respond to each type of message once (no need to send the same location x times) ((except armed/disarmed))
+    unique_messages = []
+    for m in messages:
+        mess = m.decode("utf-8")
+        if ('armed' in mess) or (mess not in unique_messages):
+            unique_messages.append(mess)
     print(f"Received messages: \n{unique_messages}")
 
     responses = []
 
-    for m in unique_messages.keys():
+    for m in unique_messages:
         res = parseRabbit(m)
         if res != None:
             responses.append(res)
