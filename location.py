@@ -68,7 +68,7 @@ def power_on(ser, power_key):
     ser.flushInput()
     print('SIM7600X is ready')
 
-def power_down():
+def power_down(power_key):
     print('SIM7600X is logging off:')
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
@@ -84,6 +84,7 @@ def power_down():
 def setupGPS():
     ser = serial.Serial('/dev/ttyS0', 115200)
     ser.flushInput()
+    power_down(power_key)
     power_on(ser, power_key)
 
     print('Start GPS session...')
