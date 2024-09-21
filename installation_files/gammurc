@@ -1,0 +1,3 @@
+[gammu]
+port = /dev/ttyS0
+connection = at115200

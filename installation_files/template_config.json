@@ -1,0 +1,9 @@
+{
+    "device_secret": "DEVICE_SECRET",
+    "owner_number": "",
+    "device_number": "DEVICE_NUMBER",
+    "rabbit_host": "RABBIT_HOST",
+    "rabbit_user": "RABBIT_USER",
+    "rabbit_password": "RABBIT_PASSWORD",
+    "armed": false
+}
