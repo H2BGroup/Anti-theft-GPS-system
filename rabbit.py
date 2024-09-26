@@ -152,8 +152,8 @@ def checkRabbit():
     if 'armed' in config:
         if config['armed'] == True:
             print("device armed, will send update")
-            messages.append('{"request": "location"}')
-            messages.append('{"request": "status"}')
+            messages.append('{"request": "location"}'.encode())
+            messages.append('{"request": "status"}'.encode())
 
 
     print("Preparing responses")
