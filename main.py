@@ -1,5 +1,5 @@
-from receiveSMS import receiveSMS
-from rabbit import checkRabbit
+# from receiveSMS import receiveSMS
+from rabbit import checkRabbit, setupPPP
 from location import setupGPS, power_down, power_key
 import time
 import os
@@ -17,13 +17,11 @@ def main():
     if GPS_on != True:
         print("ERROR Couldn't start GPS")
         return
+    setupPPP()
     try:
         while True:
             print("Check internet")
             checkRabbit()
-            time.sleep(PAUSE_DURATION)
-            print("Check sms")
-            receiveSMS()
             time.sleep(SCAN_EVERY)
     except KeyboardInterrupt:
         print("Interrupted, cleaning up before exiting")
