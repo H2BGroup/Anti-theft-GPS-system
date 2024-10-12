@@ -18,6 +18,8 @@ echo -n "APN: "
 read -r APN
 echo -n "Device phone number (format '+YYXXXXXXXXX'): "
 read -r deviceNumber
+echo -n "Your phone number (format '+YYXXXXXXXXX'): "
+read -r ownerNumber
 echo -n "RabbitMQ host: "
 read -r rabbitHost
 echo -n "RabbitMQ user: "
@@ -32,6 +34,7 @@ sudo sed -i "s/NETWORK_APN/$APN/g" /etc/ppp/peers/rnet
 cp ./installation_files/template_config.json ./config.json
 sed -i "s/DEVICE_SECRET/$secret/g" ./config.json
 sed -i "s/DEVICE_NUMBER/$deviceNumber/g" ./config.json
+sed -i "s/OWNER_NUMBER/$ownerNumber/g" ./config.json
 sed -i "s/RABBIT_HOST/$rabbitHost/g" ./config.json
 sed -i "s/RABBIT_USER/$rabbitUser/g" ./config.json
 sed -i "s/RABBIT_PASSWORD/$rabbitPassword/g" ./config.json
