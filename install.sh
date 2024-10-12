@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "Installing dependencies"
 sudo apt -y update
-sudo apt -y install gammu python3-gammu ppp python3-serial python3-smbus python3-pika
+sudo apt -y install git gammu python3-gammu ppp python3-serial python3-smbus python3-pika python3-numpy
 
 echo "Generating device secret"
 chars=0123456789
@@ -39,6 +39,10 @@ sed -i "s/RABBIT_PASSWORD/$rabbitPassword/g" ./config.json
 echo "Copying executables"
 sudo mkdir -p /usr/local/sbin/Anti-theft-GPS-system
 sudo cp ./{*.py,config.json} /usr/local/sbin/Anti-theft-GPS-system/
+
+echo "Installing accelerometer library"
+git clone https://github.com/H2BGroup/DFRobot_LIS.git
+sudo cp -r DFRobot_LIS/python/raspberrypi/examples/LIS2DW12/activity_detect /usr/local/sbin/Anti-theft-GPS-system/
 
 echo "Creating service"
 sudo cp ./installation_files/anti_theft_gps_system.service /etc/systemd/system/anti_theft_gps_system.service
