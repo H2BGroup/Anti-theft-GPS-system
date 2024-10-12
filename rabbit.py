@@ -172,7 +172,7 @@ def checkRabbit(acc_queue: queue.Queue):
     #check if accelerometer detected movement
     try:
         m = acc_queue.get_nowait()
-        if 'armed' in config:
+        if 'armed' in config and config['armed'] == True:
             responses.append(m)
     except queue.Empty:
         pass
