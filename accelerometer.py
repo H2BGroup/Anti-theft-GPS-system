@@ -3,6 +3,9 @@ from threading import Thread
 from queue import Queue
 from datetime import datetime, timezone
 from buzzer import sound_alarm
+import json
+
+CONFIG_FILE = '/usr/local/sbin/Anti-theft-GPS-system/config.json'
 
 class Accelerometer_Thread:
 
@@ -20,4 +23,10 @@ class Accelerometer_Thread:
                 'type': 'movement_detected',
                 'utc_time': datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
             })
-            sound_alarm()
+
+            f = open(CONFIG_FILE)
+            config = json.load(f)
+            f.close()
+            if 'armed' in config and config['armed'] == True:
+                print("Device armed sounding alarm!") 
+                sound_alarm()
