@@ -2,6 +2,7 @@ from activity_detect.activity_detect import Accelerometer
 from threading import Thread
 from queue import Queue
 from datetime import datetime, timezone
+from buzzer import sound_alarm
 
 class Accelerometer_Thread:
 
@@ -19,3 +20,4 @@ class Accelerometer_Thread:
                 'type': 'movement_detected',
                 'utc_time': datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
             })
+            sound_alarm()
