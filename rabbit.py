@@ -4,6 +4,7 @@ from location import getLocation
 import os
 import time
 import battery
+import queue
 
 CONFIG_FILE = '/usr/local/sbin/Anti-theft-GPS-system/config.json'
 TEMP_MESSAGE_FILE = '/usr/local/sbin/Anti-theft-GPS-system/rabbit_temp.json'
@@ -84,7 +85,7 @@ def parseRabbit(body):
     return None
 
 
-def checkRabbit():
+def checkRabbit(acc_queue: queue.Queue):
     f = open(CONFIG_FILE)
     config = json.load(f)
     f.close()
@@ -167,6 +168,14 @@ def checkRabbit():
         res = parseRabbit(m)
         if res != None:
             responses.append(res)
+    
+    #check if accelerometer detected movement
+    try:
+        m = acc_queue.get_nowait()
+        if 'armed' in config and config['armed'] == True:
+            responses.append(m)
+    except queue.Empty:
+        pass
     
     if len(responses) > 0:
         #save responses for next cycle
