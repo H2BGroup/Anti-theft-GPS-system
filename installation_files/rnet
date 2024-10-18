@@ -15,10 +15,12 @@
 connect "/usr/sbin/chat -v -f /etc/chatscripts/gprs -T NETWORK_APN"
 
 # Serial device to which the modem is connected.
-/dev/ttyS0
+/dev/ttyS0 115200
 
 # Speed of the serial line.
-115200
+# 115200
+
+debug
 
 # Assumes that your IP address is allocated dynamically by the ISP.
 noipdefault

@@ -3,10 +3,10 @@
 import RPi.GPIO as GPIO
 import serial
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 power_key = 4
-MAX_RETRIES = 10
+MAX_RETRIES = 5
 
 def send_at(ser, command, back, timeout):
     ser.write((command + '\r\n').encode())
@@ -55,6 +55,56 @@ def get_gps_position(ser):
             time.sleep(1.5)
             retries += 1
 
+def lat_to_decimal(s):
+    dd = float(s[:2])
+    mm = float(s[2:]) / 60
+    return dd + mm
+
+def lon_to_decimal(s):
+    ddd = float(s[:3])
+    mm = float(s[3:]) / 60
+    return ddd + mm
+
+def get_gps_position_NMEA():
+    latitude = None
+    longitude = None
+    utc_time = None
+
+    with serial.Serial('/dev/ttyUSB1', 115200, timeout=5, rtscts=True, dsrdtr=True) as ser:
+        if ser.readable() != True:
+            raise Exception("Serial port not readable")
+        data = ser.read(1000).decode()
+        lines = data.split('\r\n')
+        for line in lines:
+            if 'RMC' in line: # we need only recommended minimum navigation
+                print(line)
+                line_fields = line.split(',')
+                valid = line_fields[2]
+                lat = line_fields[3]
+                lat_dir = line_fields[4]
+                lon = line_fields[5]
+                lon_dir = line_fields[6]
+
+                if valid != 'A':
+                    raise Exception("Invalid GPS data. GPS module might not be ready.")
+                if lat == '' or lon == '':
+                    break
+                
+                latitude = lat_to_decimal(lat)
+                longitude = lon_to_decimal(lon)
+
+                if lat_dir == 'S':
+                    latitude *= -1
+                if lon_dir == 'W':
+                    longitude *= -1
+
+                utc_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
+                break
+    
+    return latitude, longitude, utc_time
+    
+
 def power_on(ser, power_key):
     print('SIM7600X is starting:')
     GPIO.setmode(GPIO.BCM)
@@ -92,8 +142,9 @@ def setupGPS():
     tries = 0
     while tries <= MAX_RETRIES:
         tries += 1
-        response = send_at(ser, 'AT+CGNSPWR=1', 'OK', 1)
-        if response != None:
+        response_mode = send_at(ser, 'AT+CGNSCFG=1', 'OK', 1)
+        response_PWR = send_at(ser, 'AT+CGNSPWR=1', 'OK', 1)
+        if response_mode != None and response_PWR != None:
             success = True
             break    
     
@@ -109,20 +160,10 @@ def getLocation():
     utc_time = None
     latitude = None
     longitude = None
-    
+
     try:
-        ser = serial.Serial('/dev/ttyS0', 115200)
-        ser.flushInput()
-        # power_on(ser, power_key)
-        utc_time, latitude, longitude = get_gps_position(ser)
-        # power_down(power_key)
+        latitude, longitude, utc_time = get_gps_position_NMEA()         
     except Exception as e:
         print(f"An error occurred: {e}")
-    finally:
-        if ser:
-            ser.close()
-        GPIO.cleanup()
-    if utc_time == None or latitude == None or longitude == None:
-        return None, None, None
     
     return latitude, longitude, utc_time
