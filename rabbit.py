@@ -4,12 +4,26 @@ from location import getLocation
 import os
 import time
 import battery
-from collections import Counter
+import queue
 
 CONFIG_FILE = '/usr/local/sbin/Anti-theft-GPS-system/config.json'
 TEMP_MESSAGE_FILE = '/usr/local/sbin/Anti-theft-GPS-system/rabbit_temp.json'
 
-PPP_TIMEOUT = 10.0 #seconds
+PPP_TIMEOUT = 20.0 #seconds
+
+def setupPPP():
+    os.system("sudo pon rnet")
+    #wait until network adapter called ppp0 with state UNKNOWN shows up
+    wait_ppp = 0
+    while os.system("ip link show | grep ppp0 | grep UNKNOWN > /dev/null") != 0:
+        print("waiting for ppp0")
+        time.sleep(0.5)
+        wait_ppp+=0.5
+        if wait_ppp >= PPP_TIMEOUT:
+            raise SystemExit("Error setting up pppd")
+        
+    print("internet connection successfull")
+    return True
 
 def replyRabbit(message, reply_channel, reply_queue):
     reply_channel.basic_publish(
@@ -71,18 +85,7 @@ def parseRabbit(body):
     return None
 
 
-def checkRabbit():
-    os.system("sudo pon rnet")
-    #wait until network adapter called ppp0 with state UNKNOWN shows up
-    wait_ppp = 0
-    while os.system("ip link show | grep ppp0 | grep UNKNOWN > /dev/null") != 0:
-        print("waiting for ppp0")
-        time.sleep(0.5)
-        wait_ppp+=0.5
-        if wait_ppp >= PPP_TIMEOUT:
-            raise SystemExit("Error setting up pppd")
-        
-    print("internet connection successfull")
+def checkRabbit(acc_queue: queue.Queue):
     f = open(CONFIG_FILE)
     config = json.load(f)
     f.close()
@@ -141,19 +144,13 @@ def checkRabbit():
     
     connection.close()
     connection = None
-    os.system("sudo poff rnet")
-    #wait while device called ppp0 is visible
-    while os.system("ip link show | grep ppp0 > /dev/null") == 0:
-        print("waiting for ppp0 to turn off")
-        time.sleep(0.5)
-    time.sleep(1)
 
     # check if device armed
     if 'armed' in config:
         if config['armed'] == True:
             print("device armed, will send update")
-            messages.append('{"request": "location"}')
-            messages.append('{"request": "status"}')
+            messages.append('{"request": "location"}'.encode())
+            messages.append('{"request": "status"}'.encode())
 
 
     print("Preparing responses")
@@ -171,6 +168,14 @@ def checkRabbit():
         res = parseRabbit(m)
         if res != None:
             responses.append(res)
+    
+    #check if accelerometer detected movement
+    try:
+        m = acc_queue.get_nowait()
+        if 'armed' in config and config['armed'] == True:
+            responses.append(m)
+    except queue.Empty:
+        pass
     
     if len(responses) > 0:
         #save responses for next cycle

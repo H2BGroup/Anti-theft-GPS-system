@@ -1,6 +1,6 @@
 {
     "device_secret": "DEVICE_SECRET",
-    "owner_number": "",
+    "owner_number": "OWNER_NUMBER",
     "device_number": "DEVICE_NUMBER",
     "rabbit_host": "RABBIT_HOST",
     "rabbit_user": "RABBIT_USER",

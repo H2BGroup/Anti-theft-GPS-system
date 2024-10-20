@@ -1,8 +1,10 @@
-from receiveSMS import receiveSMS
-from rabbit import checkRabbit
+# from receiveSMS import receiveSMS
+from rabbit import checkRabbit, setupPPP
 from location import setupGPS, power_down, power_key
 import time
 import os
+from accelerometer import Accelerometer_Thread
+from queue import Queue
 
 SCAN_EVERY = 5 #seconds
 PAUSE_DURATION = 1
@@ -17,13 +19,14 @@ def main():
     if GPS_on != True:
         print("ERROR Couldn't start GPS")
         return
+    setupPPP()
+    acc_queue = Queue()
+    acc = Accelerometer_Thread(acc_queue)
+    acc.start_accelerometer()
     try:
         while True:
             print("Check internet")
-            checkRabbit()
-            time.sleep(PAUSE_DURATION)
-            print("Check sms")
-            receiveSMS()
+            checkRabbit(acc_queue)
             time.sleep(SCAN_EVERY)
     except KeyboardInterrupt:
         print("Interrupted, cleaning up before exiting")
