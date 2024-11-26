@@ -1,4 +1,3 @@
-# from receiveSMS import receiveSMS
 from rabbit import checkRabbit, setupPPP
 from location import setupGPS, power_down, power_key
 import time
