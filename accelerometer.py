@@ -4,17 +4,27 @@ from queue import Queue
 from datetime import datetime, timezone
 from buzzer import sound_alarm
 import json
+import time
 
 CONFIG_FILE = '/usr/local/sbin/Anti-theft-GPS-system/config.json'
+ACC_ERROR_PAUSE_DURATION=5
 
 class Accelerometer_Thread:
 
     def __init__(self, queue: Queue):
         self.message_queue = queue
 
+    def thread_wrapper(self):
+        while True:
+            try:
+                self.accelerometer.run()
+            except OSError:
+                print("Accelerometer connection error")
+                time.sleep(ACC_ERROR_PAUSE_DURATION)
+
     def start_accelerometer(self):
-        accelerometer = Accelerometer(self.movement_detected)
-        Thread(target=accelerometer.run).start()
+        self.accelerometer = Accelerometer(self.movement_detected)
+        Thread(target=self.thread_wrapper).start()
 
     def movement_detected(self):
         if self.message_queue.qsize() == 0:
