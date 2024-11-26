@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "Installing dependencies"
 sudo apt -y update
-sudo apt -y install git gammu python3-gammu ppp python3-serial python3-smbus python3-pika python3-numpy
+sudo apt -y install git ppp python3-serial python3-smbus python3-pika python3-numpy
 
 echo "Generating device secret"
 chars=0123456789
@@ -28,7 +28,6 @@ echo -n "RabbitMQ password: "
 read -r rabbitPassword
 
 echo "Copying configuration files"
-sudo cp ./installation_files/gammurc /etc/gammurc
 sudo cp ./installation_files/rnet /etc/ppp/peers/rnet
 sudo sed -i "s/NETWORK_APN/$APN/g" /etc/ppp/peers/rnet
 cp ./installation_files/template_config.json ./config.json
