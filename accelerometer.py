@@ -17,14 +17,14 @@ class Accelerometer_Thread:
     def thread_wrapper(self):
         while True:
             try:
-                self.accelerometer.run()
+                acc = Accelerometer(self.movement_detected)
+                acc.run()
             except OSError:
                 print("Accelerometer connection error")
                 time.sleep(ACC_ERROR_PAUSE_DURATION)
 
     def start_accelerometer(self):
-        self.accelerometer = Accelerometer(self.movement_detected)
-        Thread(target=self.thread_wrapper).start()
+        Thread(target=self.thread_wrapper, daemon=True).start()
 
     def movement_detected(self):
         if self.message_queue.qsize() == 0:
