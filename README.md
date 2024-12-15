@@ -18,19 +18,6 @@ The daviced is based on a Raspberry Pi Zero WH microcomputer, to which the follo
 - Providing battery status (automatic and on demand)
 - Motion detection (notification and alarm activation)
 
-## Config file
-For the program to work a `config.json` file in main directory is needed. The content should be json formatted:
-```json
-{
-    "device_secret": "",
-    "owner_number": "",
-    "device_number": "",
-    "rabbit_host": "",
-    "rabbit_user": "",
-    "rabbit_password": ""
-}
-```
-
 ## Authors
 - Jan Barczewski
 - Radosław Gajewski
